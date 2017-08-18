@@ -1,0 +1,24 @@
+<configs>
+	<config name="blocks">
+		<append xpath="/blocks">
+            <block id="2045" name="CustomSwitch">
+                <property name="Class" value="CustomSwitch, Mods"/>
+                <property name="Material" value="Mmetal_weak"/>
+                <property name="StabilitySupport" value="false"/>
+                <property name="Shape" value="ModelEntity"/>
+                <property name="Mesh" value="models"/>
+                <property name="Model" value="Entities/Electrical/power_switchPrefab"/> <property name="HandleFace" value="South"/>
+                <property name="ImposterDontBlock" value="true"/>
+                <property name="RequiredPower" value="0"/>
+                <property name="TriggerType" value="Switch"/>
+                <property name="Group" value="Science"/>
+                <property class="RepairItems"> <property name="forgedIron" value="2"/> </property>
+                <drop event="Destroy" name="scrapIron" count="5" prob="1"/>
+                <drop event="Fall" name="scrapMetalPile" count="1" prob="0.75" stick_chance="1"/>
+                <property name="Stacknumber" value="250"/>
+                <property name="TakeDelay" value="5"/>
+                <property name="EconomicValue" value="50"/>
+            </block>
+		</append>
+	</config>
+</configs>
