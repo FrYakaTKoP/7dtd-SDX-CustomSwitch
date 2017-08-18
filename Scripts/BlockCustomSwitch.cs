@@ -11,7 +11,8 @@ public class BlockCustomSwitch : BlockPowered
 	{
 		if(showDebugLog)
 		{
-			Debug.Log(msg);
+            String msg2 = String.Concat("SDX BlockCustomSwitch.", msg);
+			Debug.Log(msg2);
 		}
 	}
     
@@ -20,21 +21,30 @@ public class BlockCustomSwitch : BlockPowered
 		new BlockActivationCommand("light", "electric_switch", false),
 		new BlockActivationCommand("take", "hand", false)
 	};
-
+    
+    // gets called onFocus of the switch 
 	public override string GetActivationText(WorldBase _world, BlockValue _blockValue, int _clrIdx, Vector3i _blockPos, EntityAlive _entityFocusing)
 	{
+        //string msg = String.Concat("GetActivationText - _blockValue.meta &2 :", (_blockValue.meta & 2));
+        //DebugMsg(msg);
+        // (_blockValue.meta &2):
+        // 0 : switch is Off , 1 : switch is On
+    
 		PlayerActionsLocal playerInput = ((EntityPlayerLocal)_entityFocusing).playerInput;
 		string keybindString = UIUtils.GetKeybindString(playerInput.Activate, playerInput.PermanentActions.Activate);
-		if ((_blockValue.meta & 2) != 0)
+        if ((_blockValue.meta & 2) != 0)
 		{
-			return string.Format(Localization.Get("useSwitchLightOff", string.Empty), keybindString);
-		}
-		return string.Format(Localization.Get("useSwitchLightOn", string.Empty), keybindString);
-	}
 
+			//return string.Format(Localization.Get("useSwitchLightOff", string.Empty), keybindString);
+			return string.Format("cSwitchOff", keybindString);
+		}
+		//return string.Format(Localization.Get("useSwitchLightOn", string.Empty), keybindString);
+        return string.Format("cSwitchOn", keybindString);
+    }
+    
 	public override bool OnBlockActivated(int _indexInBlockActivationCommands, WorldBase _world, int _cIdx, Vector3i _blockPos, BlockValue _blockValue, EntityAlive _player)
 	{
-        DebugMsg("CustomSwitch.OnBlockActivated");
+        DebugMsg("OnBlockActivated");
 		if (_indexInBlockActivationCommands != 0)
 		{
 			if (_indexInBlockActivationCommands != 1)
@@ -57,7 +67,7 @@ public class BlockCustomSwitch : BlockPowered
 
 	private bool XR(WorldBase worldBase, int num, Vector3i vector3i, BlockValue blockValue, bool flag)
 	{
-        DebugMsg("CustomSwitch.XR");
+        DebugMsg("XR");
         if(flag == null)
         {
             flag = false;
@@ -125,7 +135,7 @@ public class BlockCustomSwitch : BlockPowered
 
 	public override void OnBlockEntityTransformAfterActivated(WorldBase _world, Vector3i _blockPos, int _cIdx, BlockValue _blockValue, BlockEntityData _ebcd)
 	{
-        DebugMsg("CustomSwitch.OnBlockEntityTransformAfterActivated");
+        DebugMsg("OnBlockEntityTransformAfterActivated");
 		base.OnBlockEntityTransformAfterActivated(_world, _blockPos, _cIdx, _blockValue, _ebcd);
 		bool flag = (_blockValue.meta & 1) != 0;
 		bool flag2 = (_blockValue.meta & 2) != 0;
@@ -156,7 +166,7 @@ public class BlockCustomSwitch : BlockPowered
 
 	public override void OnBlockValueChanged(WorldBase _world, int _clrIdx, Vector3i _blockPos, BlockValue _oldBlockValue, BlockValue _newBlockValue)
 	{
-        DebugMsg("CustomSwitch.OnBlockValueChanged");
+        DebugMsg("OnBlockValueChanged");
 		base.OnBlockValueChanged(_world, _clrIdx, _blockPos, _oldBlockValue, _newBlockValue);
 		this.XR(_world, _clrIdx, _blockPos, _newBlockValue, false);
 		BlockEntityData blockEntity = ((World)_world).ChunkClusters[_clrIdx].GetBlockEntity(_blockPos);
@@ -173,7 +183,7 @@ public class BlockCustomSwitch : BlockPowered
 
 	public override bool ActivateBlock(WorldBase _world, int _cIdx, Vector3i _blockPos, BlockValue _blockValue, bool isOn, bool isPowered)
 	{
-        DebugMsg("CustomSwitch.ActivateBlock");
+        DebugMsg("ActivateBlock");
 		_blockValue.meta = (byte)(((int)_blockValue.meta & -3) | ((!isOn) ? 0 : 2));
 		_blockValue.meta = (byte)(((int)_blockValue.meta & -2) | ((!isPowered) ? 0 : 1));
 		_world.SetBlockRPC(_cIdx, _blockPos, _blockValue);
@@ -193,7 +203,7 @@ public class BlockCustomSwitch : BlockPowered
 
 	private void HR(BlockEntityData blockEntityData, bool value, BlockValue blockValue)
 	{
-        DebugMsg("CustomSwitch.HR");
+        DebugMsg("HR");
 		Animator[] componentsInChildren;
 		if (blockEntityData != null && blockEntityData.bHasTransform && (componentsInChildren = blockEntityData.transform.GetComponentsInChildren<Animator>()) != null)
 		{
@@ -209,7 +219,7 @@ public class BlockCustomSwitch : BlockPowered
 
 	public override void ForceAnimationState(BlockValue _blockValue, BlockEntityData _ebcd)
 	{
-        DebugMsg("CustomSwitch.ForceAnimationState");
+        DebugMsg("ForceAnimationState");
 		Animator[] componentsInChildren;
 		if (_ebcd != null && _ebcd.bHasTransform && (componentsInChildren = _ebcd.transform.GetComponentsInChildren<Animator>(false)) != null)
 		{
