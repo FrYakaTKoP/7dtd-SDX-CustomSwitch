@@ -42,6 +42,7 @@ public class BlockCustomSwitch : BlockPowered
         return string.Format("cSwitchOn", keybindString);
     }
     
+	// calls when player use the block
 	public override bool OnBlockActivated(int _indexInBlockActivationCommands, WorldBase _world, int _cIdx, Vector3i _blockPos, BlockValue _blockValue, EntityAlive _player)
 	{
         DebugMsg("OnBlockActivated");
@@ -65,12 +66,13 @@ public class BlockCustomSwitch : BlockPowered
 		}
 	}
 
-	private bool XR(WorldBase worldBase, int num, Vector3i vector3i, BlockValue blockValue, bool flag)
+	// 
+	private bool XR(WorldBase worldBase, int num, Vector3i vector3i, BlockValue blockValue, bool flagOnBlockActivated)
 	{
         DebugMsg("XR");
-        if(flag == null)
+        if(flagOnBlockActivated == null)
         {
-            flag = false;
+            flagOnBlockActivated = false;
         }
 		ChunkCluster chunkCluster = worldBase.ChunkClusters[num];
 		if (chunkCluster == null)
@@ -81,9 +83,24 @@ public class BlockCustomSwitch : BlockPowered
 		{
 			return false;
 		}
-		bool flag2 = (blockValue.meta & 1) != 0;
-		bool flag3 = (blockValue.meta & 2) != 0;
-		if (flag)
+				
+		bool hasSecondInput = HasActivePower(worldBase, num, vector3i);
+		
+		bool flag2 = (blockValue.meta & 1) != 0; // seems to be BlockIsPowered
+		bool flag3 = (blockValue.meta & 2) != 0; // seems to be SwitchIsOn 
+		
+		string flag2msg = flag2 ? "true" : "false";
+		string flag3msg = flag3 ? "true" : "false"; 
+		string msg = "XR - BlockValue.meta &2=";
+		msg = String.Concat(msg, flag2msg);
+		msg = String.Concat(msg, " &3=");
+		msg = String.Concat(msg, flag3msg);
+		// notworking f***
+		// string msg = String.Format("XR - BlockValue.meta &2=", flag2msg, " &3=", flag3msg);	
+		// string msg = String.Format("XR - BlockValue.meta &2=", flag2 ? "true" : "false", " &3=", flag3 ? "true" : "false");
+		DebugMsg(msg);
+		
+		if (flagOnBlockActivated)
 		{
 			flag3 = !flag3;
 			blockValue.meta = (byte)(((int)blockValue.meta & -3) | ((!flag3) ? 0 : 2));
@@ -118,20 +135,98 @@ public class BlockCustomSwitch : BlockPowered
 					{
 						componentsInChildren[i].material = new Material(componentsInChildren[i].sharedMaterial);
 					}
+					Color tempColor;
 					if (flag2)
 					{
-						componentsInChildren[i].material.SetColor("_EmissionColor", (!flag3) ? Color.red : Color.green);
-					}
+						// switch is powered
+						if(flag3)
+						{
+							// switch is On
+							if(hasSecondInput == true){
+								// switch has 2nd input
+								tempColor = Color.blue;
+							}
+							else
+							{
+								tempColor = Color.green;								
+							}
+						}
+						else
+							// switch is Off
+							if(hasSecondInput == true){
+								// switch has 2nd input
+								tempColor = Color.yellow;
+							}
+							else
+							{
+								tempColor = Color.red;								
+							}							
+						}
 					else
-					{
-						componentsInChildren[i].material.SetColor("_EmissionColor", Color.black);
+					{							
+						// switch has no power
+						if(hasSecondInput == true){
+							// test wise a "there is 2nd input" even no power on the switch
+							tempColor = new Color(1f, 0.92f, 0.016f, 0.6f); //Color.yellow;
+						}
+						else
+						{
+							tempColor = Color.red;								
+						}	
 					}
+					componentsInChildren[i].material.SetColor("_EmissionColor", tempColor);
 					componentsInChildren[i].sharedMaterial = componentsInChildren[i].material;
 				}
 			}
 		}
 		return true;
 	}
+	
+		
+	static Vector3i[] PowerInputLocations(Vector3i _blockPos)
+	{
+		int inputSpace = 1;
+		Vector3i inputPosA = _blockPos;
+		Vector3i inputPosB = _blockPos;
+		Vector3i inputPosC = _blockPos;
+		Vector3i inputPosD = _blockPos;
+		
+		inputPosA.y = _blockPos.y+inputSpace;
+		inputPosB.y = _blockPos.y-inputSpace;
+		inputPosC.x = _blockPos.x+inputSpace;
+		inputPosD.x = _blockPos.x-inputSpace;
+		
+		Vector3i[] array = new Vector3i[4];
+		array[0] = inputPosA;
+		array[1] = inputPosB;
+		array[2] = inputPosC;
+		array[3] = inputPosD;
+		return array;
+		
+	}
+	
+	public static bool HasActivePower(WorldBase _world, int _cIdx, Vector3i _blockPos)
+	{
+		Vector3i[] locations = PowerInputLocations(_blockPos);
+		foreach (Vector3i vector in locations)
+		{
+			BlockValue inputBlockValue = _world.GetBlock(vector);
+			Type inputBlockType = Block.list[inputBlockValue.type].GetType();
+			if(inputBlockType == typeof(BlockPowered))
+			{
+				TileEntityPowered tileEntityPowered = (TileEntityPowered)_world.GetTileEntity(_cIdx, vector);
+				if (tileEntityPowered != null)
+				{
+					if(tileEntityPowered.IsPowered)
+					{
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+	
 
 	public override void OnBlockEntityTransformAfterActivated(WorldBase _world, Vector3i _blockPos, int _cIdx, BlockValue _blockValue, BlockEntityData _ebcd)
 	{
