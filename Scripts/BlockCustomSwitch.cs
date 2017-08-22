@@ -100,6 +100,7 @@ public class BlockCustomSwitch : BlockPowered
 		// string msg = String.Format("XR - BlockValue.meta &2=", flag2 ? "true" : "false", " &3=", flag3 ? "true" : "false");
 		DebugMsg(msg);
 		
+        flagOnBlockActivated = false; // this disables runtimetoggle
 		if (flagOnBlockActivated)
 		{
 			flag3 = !flag3;
@@ -279,6 +280,28 @@ public class BlockCustomSwitch : BlockPowered
 	public override bool ActivateBlock(WorldBase _world, int _cIdx, Vector3i _blockPos, BlockValue _blockValue, bool isOn, bool isPowered)
 	{
         DebugMsg("ActivateBlock");
+
+		bool hasSecondInput = HasActivePower(_world, _cIdx, _blockPos);
+        if(hasSecondInput == true){
+            // switch has 2nd input
+            isOn = true;
+        }
+        else
+        {
+            isOn = false;
+        }
+/*        
+        //if (Steam.Network.IsServer)
+		//{
+			TileEntityPoweredTrigger tileEntityPoweredTrigger = _world.GetTileEntity(_cIdx, _blockPos) as TileEntityPoweredTrigger;
+            if (tileEntityPoweredTrigger != null)
+			{                
+
+                tileEntityPoweredTrigger.ClientTriggerData.();
+				//tileEntityPoweredTrigger.IsTriggered = isOn;
+			}
+		//} 
+*/        
 		_blockValue.meta = (byte)(((int)_blockValue.meta & -3) | ((!isOn) ? 0 : 2));
 		_blockValue.meta = (byte)(((int)_blockValue.meta & -2) | ((!isPowered) ? 0 : 1));
 		_world.SetBlockRPC(_cIdx, _blockPos, _blockValue);
@@ -288,8 +311,11 @@ public class BlockCustomSwitch : BlockPowered
 
 	public override TileEntityPowered CreateTileEntity(Chunk chunk)
 	{
-		return new TileEntityPoweredTrigger(chunk);
-	}
+		return new TileEntityPoweredTrigger(chunk)
+		{
+			TriggerType = PowerTrigger.TriggerTypes.PressurePlate
+		};
+    }
 
 	public static bool IsSwitchOn(byte _metadata)
 	{
@@ -335,4 +361,21 @@ public class BlockCustomSwitch : BlockPowered
 			}
 		}
 	}
+    
+    // BlockPressurePlate
+    public override void OnBlockAdded(WorldBase _world, Chunk _chunk, Vector3i _blockPos, BlockValue _blockValue)
+    {
+        base.OnBlockAdded(_world, _chunk, _blockPos, _blockValue);
+        if (_blockValue.ischild)
+        {
+            return;
+        }
+        if (!(_world.GetTileEntity(_chunk.ClrIdx, _blockPos) is TileEntityPoweredTrigger))
+        {
+            TileEntityPowered tileEntityPowered = this.CreateTileEntity(_chunk);
+            tileEntityPowered.localChunkPos = World.toBlock(_blockPos);
+            tileEntityPowered.InitializePowerData();
+            _chunk.AddTileEntity(tileEntityPowered);
+        }
+    }
 }
